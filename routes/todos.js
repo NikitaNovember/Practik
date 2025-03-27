@@ -39,13 +39,13 @@ router.post('/create', async (req, res) => {
 
 router.post('/complete', async (req, res) => {
     try {
-      console.log('Полученные данные:', req.body); // Логируем данные
+      console.log('Полученные данные:', req.body);
   
       const id = req.body.id && req.body.id.trim() !== '' ? parseInt(req.body.id, 10) : null;
       const status = req.body.completed ? 1 : 0;
   
       if (!id) {
-        console.error('❌ Ошибка: отсутствует ID задачи!');  
+        console.error('Ошибка: отсутствует ID задачи!');  
         return res.status(400).send(`Ошибка: ID не передан. Полученные данные: ${JSON.stringify(req.body)}`);
       }
   
@@ -53,7 +53,7 @@ router.post('/complete', async (req, res) => {
   
       res.redirect('/');
     } catch (error) {
-      console.error('❌ Ошибка при обновлении статуса:', error);
+      console.error('Ошибка при обновлении статуса:', error);
       res.status(500).send('Ошибка сервера');
     }
   });
