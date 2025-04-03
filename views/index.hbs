@@ -4,18 +4,15 @@
 <ul>
   {{#each todos}}
   <li class="todo">
-    <form action="/complete" method="POST">
-      <input type="hidden" name="id" value="{{this.id}}">
+    <label>
+      <input type="checkbox" class="toggle-status" data-id="{{this.Id}}" {{#if status}}checked{{/if}}>
+      <span>{{title}}</span>
+    </label>
 
-      <label>
-        <input type="checkbox" name="completed" value="1" {{#if status}}checked{{/if}}>
-        <span>{{title}}</span>
-      </label>
-
-      <button class="btn purple darken-4" type="submit">SAVE</button>
-
-
-    </form>
+    <!-- Кнопка удаления -->
+    <button class="btn-small red darken-2 delete-todo" data-id="{{this.Id}}">
+      <i class="material-icons">delete</i>
+    </button>
   </li>
   {{/each}}
 </ul>
@@ -23,3 +20,52 @@
 <p>No todos!</p>
 {{/if}}
 
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Обработчик для чекбоксов (изменение статуса)
+    document.querySelectorAll('.toggle-status').forEach(checkbox => {
+      checkbox.addEventListener('change', function () {
+        let todoId = this.dataset.id;
+        let completed = this.checked ? 1 : 0;
+
+        fetch('/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: todoId, completed: completed })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('Статус успешно обновлен!');
+          } else {
+            console.error('Ошибка обновления статуса:', data.error);
+          }
+        })
+        .catch(error => console.error('Ошибка запроса:', error));
+      });
+    });
+
+    // Обработчик для кнопок удаления
+    document.querySelectorAll('.delete-todo').forEach(button => {
+      button.addEventListener('click', function () {
+        let todoId = this.dataset.id;
+
+        fetch('/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: todoId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            this.closest('li').remove(); // Удаляем задачу из интерфейса
+            console.log('Задача удалена!');
+          } else {
+            console.error('Ошибка удаления:', data.error);
+          }
+        })
+        .catch(error => console.error('Ошибка запроса:', error));
+      });
+    });
+  });
+</script>

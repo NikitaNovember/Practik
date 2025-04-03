@@ -28,7 +28,21 @@ router.get('/create', (req, res) => {
 
 router.post('/create', async (req, res) => {
   try {
-    await req.db.execute('INSERT INTO todos (title, status) VALUES (?, ?)', [req.body.title, 0]);
+    const title = req.body.title.trim();
+
+    if (!title) {
+      return res.status(400).send('Ошибка: Название не может быть пустым!');
+    }
+
+    // Проверяем, существует ли уже такая задача
+    const [existingTodos] = await req.db.execute('SELECT * FROM todos WHERE title = ?', [title]);
+
+    if (existingTodos.length > 0) {
+      return res.status(400).send('Ошибка: Такая задача уже существует!');
+    }
+
+    // Если такой задачи нет – создаём новую
+    await req.db.execute('INSERT INTO todos (title, status) VALUES (?, ?)', [title, 0]);
     res.redirect('/');
   } catch (error) {
     console.error('Ошибка при создании задачи:', error);
@@ -37,26 +51,41 @@ router.post('/create', async (req, res) => {
 });
 
 
+
 router.post('/complete', async (req, res) => {
-    try {
-      console.log('Полученные данные:', req.body);
-  
-      const id = req.body.id && req.body.id.trim() !== '' ? parseInt(req.body.id, 10) : null;
-      const status = req.body.completed ? 1 : 0;
-  
-      if (!id) {
-        console.error('Ошибка: отсутствует ID задачи!');  
-        return res.status(400).send(`Ошибка: ID не передан. Полученные данные: ${JSON.stringify(req.body)}`);
-      }
-  
-      await req.db.execute('UPDATE todos SET status = ? WHERE Id = ?', [status, id]);
-  
-      res.redirect('/');
-    } catch (error) {
-      console.error('Ошибка при обновлении статуса:', error);
-      res.status(500).send('Ошибка сервера');
+  try {
+    const { id, completed } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'ID не передан' });
     }
-  });
-  
+
+    await req.db.execute('UPDATE todos SET status = ? WHERE Id = ?', [completed, id]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Ошибка при обновлении статуса:', error);
+    res.status(500).json({ success: false, error: 'Ошибка сервера' });
+  }
+});
+
+
+router.post('/delete', async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'ID не передан' });
+    }
+
+    await req.db.execute('DELETE FROM todos WHERE Id = ?', [id]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Ошибка при удалении задачи:', error);
+    res.status(500).json({ success: false, error: 'Ошибка сервера' });
+  }
+});
+
 
 module.exports = router;
