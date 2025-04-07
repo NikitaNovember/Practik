@@ -9,7 +9,7 @@
       <span>{{title}}</span>
     </label>
 
-    <!-- Кнопка удаления -->
+
     <button class="btn-small red darken-2 delete-todo" data-id="{{this.Id}}">
       <i class="material-icons">delete</i>
     </button>
@@ -22,49 +22,57 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Обработчик для чекбоксов (изменение статуса)
+
     document.querySelectorAll('.toggle-status').forEach(checkbox => {
-      checkbox.addEventListener('change', function () {
+      checkbox.addEventListener('change', async function () {
         let todoId = this.dataset.id;
         let completed = this.checked ? 1 : 0;
 
-        fetch('/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: todoId, completed: completed })
-        })
-        .then(response => response.json())
-        .then(data => {
+        console.log(`Отправка: ID=${todoId}, completed=${completed}`);
+
+        try {
+          let response = await fetch('/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: todoId, completed: completed })
+          });
+
+          let data = await response.json();
           if (data.success) {
-            console.log('Статус успешно обновлен!');
+            console.log('Статус обновлён!');
           } else {
-            console.error('Ошибка обновления статуса:', data.error);
+            console.error('Ошибка обновления:', data.error);
           }
-        })
-        .catch(error => console.error('Ошибка запроса:', error));
+        } catch (error) {
+          console.error('Ошибка AJAX:', error);
+        }
       });
     });
 
-    // Обработчик для кнопок удаления
-    document.querySelectorAll('.delete-todo').forEach(button => {
-      button.addEventListener('click', function () {
-        let todoId = this.dataset.id;
 
-        fetch('/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: todoId })
-        })
-        .then(response => response.json())
-        .then(data => {
+    document.querySelectorAll('.delete-todo').forEach(button => {
+      button.addEventListener('click', async function () {
+        let todoId = this.dataset.id;
+        
+        console.log(`Отправка на удаление: ID=${todoId}`);
+
+        try {
+          let response = await fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: todoId })
+          });
+
+          let data = await response.json();
           if (data.success) {
-            this.closest('li').remove(); // Удаляем задачу из интерфейса
-            console.log('Задача удалена!');
+            console.log('Удалено!');
+            this.closest('li').remove();
           } else {
             console.error('Ошибка удаления:', data.error);
           }
-        })
-        .catch(error => console.error('Ошибка запроса:', error));
+        } catch (error) {
+          console.error('Ошибка AJAX:', error);
+        }
       });
     });
   });
